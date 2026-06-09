@@ -1,0 +1,36 @@
+{
+  "name": "three-model-viewer",
+  "displayName": "Three Model Viewer",
+  "description": "VS Code extension to preview 3D models using three.js",
+  "version": "0.0.3",
+  "publisher": "localdev",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "threeModelViewer.openViewer",
+        "title": "Three Model Viewer: Open Viewer"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "three": "^0.167.1"
+  }
+}

@@ -6,6 +6,10 @@ import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
 import URDFLoader from "urdf-loader";
 import { ViewportGizmo } from "three-viewport-gizmo";
 
+// Use Z-up convention throughout: affects ViewportGizmo coordinate conversions
+// and the default up vector for all Object3D instances.
+THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
+
 const vscode = acquireVsCodeApi();
 
 const viewerElement = document.getElementById("viewer");
@@ -35,7 +39,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(2, 1.5, 3);
+camera.position.set(3, -3, 2);
+// Z-up: tell the camera its up direction before OrbitControls reads it.
+camera.up.set(0, 0, 1);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -44,7 +50,7 @@ viewerElement.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.target.set(0, 0.5, 0);
+controls.target.set(0, 0, 0.5);
 controls.update();
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -55,6 +61,8 @@ directionalLight.position.set(4, 8, 6);
 scene.add(directionalLight);
 
 const grid = new THREE.GridHelper(20, 20, 0x3f3f46, 0x2a2a30);
+// Rotate grid so it lies in the XY plane (Z-up convention).
+grid.rotation.x = Math.PI / 2;
 scene.add(grid);
 
 const gizmo = new ViewportGizmo(camera, renderer, {
@@ -224,8 +232,7 @@ window.addEventListener("message", async (event) => {
         urdfLoader.packages = packagesPath;
       }
       const robot = await urdfLoader.loadAsync(url);
-      // URDF/ROS uses Z-up; three.js uses Y-up. Rotate -90° around X to align.
-      robot.rotation.x = -Math.PI / 2;
+
       applyLoadedModel(robot);
       currentUrdfRobot = robot;
       updateAxesMode();
@@ -348,7 +355,7 @@ function frameObject(object3d) {
   const maxDim = Math.max(size.x, size.y, size.z, 0.1);
   const distance = maxDim * 1.8;
 
-  camera.position.set(distance, distance * 0.7, distance);
+  camera.position.set(distance, -distance, distance * 0.7);
   controls.target.set(0, 0, 0);
   controls.update();
 }

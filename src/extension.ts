@@ -118,6 +118,15 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
   const urdfLoaderUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, "node_modules", "urdf-loader", "src", "URDFLoader.js")
   );
+  const viewportGizmoUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      extensionUri,
+      "node_modules",
+      "three-viewport-gizmo",
+      "dist",
+      "three-viewport-gizmo.js"
+    )
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -144,7 +153,8 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
           "three": "${threeUri}",
           "three/addons/": "${threeAddonsUri}/",
           "three/examples/jsm/": "${threeAddonsUri}/",
-          "urdf-loader": "${urdfLoaderUri}"
+          "urdf-loader": "${urdfLoaderUri}",
+          "three-viewport-gizmo": "${viewportGizmoUri}"
         }
       }
     </script>

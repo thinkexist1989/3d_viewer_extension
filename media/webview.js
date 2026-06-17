@@ -4,22 +4,27 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
 import URDFLoader from "urdf-loader";
+import { ViewportGizmo } from "three-viewport-gizmo";
 
 const vscode = acquireVsCodeApi();
 
 const viewerElement = document.getElementById("viewer");
 const openButton = document.getElementById("openButton");
 const statusElement = document.getElementById("status");
-let modelInfoCollapsed = false;
 const dropOverlayElement = document.createElement("div");
 dropOverlayElement.className = "drop-overlay";
 dropOverlayElement.textContent = "Drop .urdf model here";
 viewerElement.appendChild(dropOverlayElement);
 
-const modelInfoElement = document.createElement("div");
-modelInfoElement.className = "model-info";
-viewerElement.appendChild(modelInfoElement);
-resetModelInfo();
+const capsuleToolbar = document.createElement("div");
+capsuleToolbar.className = "capsule-toolbar";
+viewerElement.appendChild(capsuleToolbar);
+
+const axesBtn = document.createElement("button");
+axesBtn.className = "capsule-btn";
+axesBtn.id = "axesButton";
+axesBtn.textContent = "Axes";
+capsuleToolbar.appendChild(axesBtn);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#10141a");
@@ -52,62 +57,12 @@ scene.add(directionalLight);
 const grid = new THREE.GridHelper(20, 20, 0x3f3f46, 0x2a2a30);
 scene.add(grid);
 
-// --- Gizmo: secondary scene showing world-space XYZ axes in the bottom-left ---
-const gizmoSize = 80; // px (CSS pixels)
-const gizmoScene = new THREE.Scene();
-const gizmoCamera = new THREE.OrthographicCamera(-1.4, 1.4, 1.4, -1.4, 0, 10);
-gizmoCamera.position.set(0, 0, 5);
-gizmoCamera.lookAt(0, 0, 0);
-
-// Root node that converts ROS Z-up to three.js Y-up:
-// rotating -90° around X maps ROS Z (up) → three.js Y (visual up).
-const gizmoRoot = new THREE.Object3D();
-gizmoRoot.rotation.x = -Math.PI / 2;
-gizmoScene.add(gizmoRoot);
-
-// Build labelled axes: X=red, Y=green, Z=blue
-(function buildGizmoAxes() {
-  const axes = [
-    { dir: new THREE.Vector3(1, 0, 0), color: 0xff4444 },
-    { dir: new THREE.Vector3(0, 1, 0), color: 0x44dd44 },
-    { dir: new THREE.Vector3(0, 0, 1), color: 0x4488ff }
-  ];
-  for (const { dir, color } of axes) {
-    const mat = new THREE.LineBasicMaterial({ color, depthTest: false });
-    const pts = [new THREE.Vector3(0, 0, 0), dir.clone()];
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const line = new THREE.Line(geo, mat);
-    line.renderOrder = 999;
-    gizmoRoot.add(line);
-  }
-})();
-
-// Sprite-based axis labels
-(function buildGizmoLabels() {
-  const labels = [
-    { text: "X", pos: new THREE.Vector3(1.25, 0, 0), color: "#ff4444" },
-    { text: "Y", pos: new THREE.Vector3(0, 1.25, 0), color: "#44dd44" },
-    { text: "Z", pos: new THREE.Vector3(0, 0, 1.25), color: "#4488ff" }
-  ];
-  for (const { text, pos, color } of labels) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 64;
-    canvas.height = 64;
-    const ctx = canvas.getContext("2d");
-    ctx.font = "bold 48px sans-serif";
-    ctx.fillStyle = color;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, 32, 32);
-    const tex = new THREE.CanvasTexture(canvas);
-    const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
-    const sprite = new THREE.Sprite(mat);
-    sprite.position.copy(pos);
-    sprite.scale.set(0.4, 0.4, 1);
-    sprite.renderOrder = 1000;
-    gizmoRoot.add(sprite);
-  }
-})();
+const gizmo = new ViewportGizmo(camera, renderer, {
+  container: viewerElement,
+  placement: "bottom-left",
+  size: 100
+});
+gizmo.attachControls(controls);
 
 const loader = new GLTFLoader();
 const urdfLoader = new URDFLoader();
@@ -175,6 +130,9 @@ let currentUrdfRobot = null;
 let dragDepth = 0;
 let loadingSource = "unknown";
 let lastFailedUrl = "";
+let axesVisible = false;
+const originalMaterialProps = new Map();
+let jointAxesHelpers = [];
 
 loader.manager.onError = (url) => {
   lastFailedUrl = String(url ?? "");
@@ -183,6 +141,12 @@ loader.manager.onError = (url) => {
 
 openButton?.addEventListener("click", () => {
   vscode.postMessage({ type: "requestOpenModel" });
+});
+
+axesBtn.addEventListener("click", () => {
+  axesVisible = !axesVisible;
+  axesBtn.classList.toggle("active", axesVisible);
+  updateAxesMode();
 });
 
 viewerElement.addEventListener("dragenter", (event) => {
@@ -263,14 +227,13 @@ window.addEventListener("message", async (event) => {
       // URDF/ROS uses Z-up; three.js uses Y-up. Rotate -90° around X to align.
       robot.rotation.x = -Math.PI / 2;
       applyLoadedModel(robot);
-      updateUrdfModelInfo(robot, sourcePath);
       currentUrdfRobot = robot;
+      updateAxesMode();
       setStatus(`Model loaded: ${fileName}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const details = buildLoadErrorDetails(errorMessage);
       setStatus(details);
-      resetModelInfo();
       console.error("[Three Model Viewer] loadModelUrl failed", {
         source: loadingSource,
         fileName,
@@ -289,23 +252,7 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 
-  // Render gizmo into a small viewport in the bottom-left corner.
-  // Sync gizmo camera orientation to the main camera (rotation only).
-  gizmoCamera.quaternion.copy(camera.quaternion);
-
-  const dpr = renderer.getPixelRatio();
-  const gizmoPx = Math.round(gizmoSize * dpr);
-  const totalH = renderer.domElement.height;
-
-  renderer.autoClear = false;
-  renderer.setScissorTest(true);
-  renderer.setViewport(0, 0, gizmoPx, gizmoPx);
-  renderer.setScissor(0, 0, gizmoPx, gizmoPx);
-  renderer.clearDepth();
-  renderer.render(gizmoScene, gizmoCamera);
-  renderer.setScissorTest(false);
-  renderer.setViewport(0, 0, renderer.domElement.width, totalH);
-  renderer.autoClear = true;
+  gizmo.render();
 }
 
 function resize() {
@@ -314,6 +261,7 @@ function resize() {
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
   renderer.setSize(width, height);
+  gizmo.update();
 }
 
 async function loadModelFromFile(file) {
@@ -330,8 +278,8 @@ async function loadModelFromFile(file) {
       // URDF/ROS uses Z-up; three.js uses Y-up. Rotate -90° around X to align.
       robot.rotation.x = -Math.PI / 2;
       applyLoadedModel(robot);
-      updateUrdfModelInfo(robot, file.name);
       currentUrdfRobot = robot;
+      updateAxesMode();
       setStatus(`Model loaded: ${file.name} (external meshes may fail via drag-drop)`);
       return;
     }
@@ -341,7 +289,6 @@ async function loadModelFromFile(file) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const details = buildLoadErrorDetails(errorMessage);
     setStatus(details);
-    resetModelInfo();
     console.error("[Three Model Viewer] loadModelFromFile failed", {
       source: loadingSource,
       fileName: file.name,
@@ -357,6 +304,8 @@ function applyLoadedModel(sceneObject) {
     disposeObject(currentModel);
   }
 
+  jointAxesHelpers = [];
+  originalMaterialProps.clear();
   currentModel = sceneObject;
   currentUrdfRobot = null;
 
@@ -423,125 +372,61 @@ function setStatus(text) {
   }
 }
 
-function resetModelInfo() {
-  renderModelInfo(`
-    <div class="info-row"><span>Path</span><span>-</span></div>
-    <div class="info-row"><span>Links</span><span>-</span></div>
-    <div class="info-row"><span>Joints</span><span>-</span></div>
-    <div class="info-row"><span>Joint Types</span><span>-</span></div>
-    <div class="info-row"><span>Vertices</span><span>-</span></div>
-    <div class="info-row"><span>Faces</span><span>-</span></div>
-    <div class="info-row"><span>Meshes</span><span>-</span></div>
-    <div class="info-row"><span>Nodes</span><span>-</span></div>
-    <div class="info-row"><span>Materials</span><span>-</span></div>
-  `);
-}
-
-function updateUrdfModelInfo(robot, sourcePath) {
-  const stats = analyzeModel(robot);
-  const linkNames = robot.links ? Object.keys(robot.links) : [];
-  const jointNames = robot.joints ? Object.keys(robot.joints) : [];
-  const jointTypes = {};
-  if (robot.joints) {
-    for (const joint of Object.values(robot.joints)) {
-      const jt = joint.jointType || "unknown";
-      jointTypes[jt] = (jointTypes[jt] || 0) + 1;
-    }
+function updateAxesMode() {
+  // Remove all existing joint axes helpers.
+  for (const helper of jointAxesHelpers) {
+    helper.parent?.remove(helper);
+    helper.geometry?.dispose();
   }
-  const jointTypeSummary = Object.entries(jointTypes)
-    .map(([type, count]) => `${type}: ${count}`)
-    .join(", ");
+  jointAxesHelpers = [];
 
-  renderModelInfo(`
-    <div class="info-row"><span>Path</span><span title="${escapeHtml(sourcePath)}">${escapeHtml(sourcePath)}</span></div>
-    <div class="info-row"><span>Links</span><span>${formatNumber(linkNames.length)}</span></div>
-    <div class="info-row"><span>Joints</span><span>${formatNumber(jointNames.length)}</span></div>
-    <div class="info-row"><span>Joint Types</span><span class="joint-types">${escapeHtml(jointTypeSummary || "—")}</span></div>
-    <div class="info-row"><span>Vertices</span><span>${formatNumber(stats.vertices)}</span></div>
-    <div class="info-row"><span>Faces</span><span>${formatNumber(stats.faces)}</span></div>
-    <div class="info-row"><span>Meshes</span><span>${formatNumber(stats.meshes)}</span></div>
-    <div class="info-row"><span>Nodes</span><span>${formatNumber(stats.nodes)}</span></div>
-    <div class="info-row"><span>Materials</span><span>${formatNumber(stats.materials)}</span></div>
-  `);
-}
+  if (!currentModel) return;
 
-function renderModelInfo(contentHtml) {
-  modelInfoElement.classList.toggle("collapsed", modelInfoCollapsed);
-  modelInfoElement.innerHTML = `
-    <div class="model-info-header">
-      <h3>Model Info</h3>
-      <button class="model-info-toggle" type="button">${modelInfoCollapsed ? "Show" : "Hide"}</button>
-    </div>
-    <div class="model-info-body">
-      ${contentHtml}
-    </div>
-  `;
-
-  const toggleButton = modelInfoElement.querySelector(".model-info-toggle");
-  toggleButton?.addEventListener("click", () => {
-    modelInfoCollapsed = !modelInfoCollapsed;
-    renderModelInfo(contentHtml);
-  });
-}
-
-function analyzeModel(sceneObject) {
-  let vertices = 0;
-  let faces = 0;
-  let meshes = 0;
-  let nodes = 0;
-  const materialIds = new Set();
-
-  sceneObject.traverse((child) => {
-    nodes += 1;
-
-    if (!child.isMesh) {
-      return;
-    }
-
-    meshes += 1;
-    const geometry = child.geometry;
-    const position = geometry?.attributes?.position;
-    if (position) {
-      vertices += position.count;
-    }
-
-    if (geometry?.index) {
-      faces += Math.floor(geometry.index.count / 3);
-    } else if (position) {
-      faces += Math.floor(position.count / 3);
-    }
-
-    if (Array.isArray(child.material)) {
-      child.material.forEach((material) => {
-        if (material?.uuid) {
-          materialIds.add(material.uuid);
-        }
+  if (axesVisible) {
+    // Make all mesh materials semi-transparent and save originals.
+    currentModel.traverse((child) => {
+      if (!child.isMesh) return;
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((mat) => {
+        if (!mat || originalMaterialProps.has(mat.uuid)) return;
+        originalMaterialProps.set(mat.uuid, {
+          transparent: mat.transparent,
+          opacity: mat.opacity,
+          depthWrite: mat.depthWrite
+        });
+        mat.transparent = true;
+        mat.opacity = 0.35;
+        mat.depthWrite = false;
+        mat.needsUpdate = true;
       });
-    } else if (child.material?.uuid) {
-      materialIds.add(child.material.uuid);
+    });
+
+    // Add AxesHelper to every joint.
+    if (currentUrdfRobot?.joints) {
+      for (const joint of Object.values(currentUrdfRobot.joints)) {
+        const helper = new THREE.AxesHelper(0.12);
+        helper.renderOrder = 999;
+        joint.add(helper);
+        jointAxesHelpers.push(helper);
+      }
     }
-  });
-
-  return {
-    vertices,
-    faces,
-    meshes,
-    nodes,
-    materials: materialIds.size
-  };
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat("en-US").format(value);
-}
-
-function escapeHtml(input) {
-  return String(input)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+  } else {
+    // Restore original material properties.
+    currentModel.traverse((child) => {
+      if (!child.isMesh) return;
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((mat) => {
+        if (!mat) return;
+        const orig = originalMaterialProps.get(mat.uuid);
+        if (!orig) return;
+        mat.transparent = orig.transparent;
+        mat.opacity = orig.opacity;
+        mat.depthWrite = orig.depthWrite;
+        mat.needsUpdate = true;
+      });
+    });
+    originalMaterialProps.clear();
+  }
 }
 
 function buildLoadErrorDetails(errorMessage) {

@@ -142,7 +142,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
   </head>
   <body>
     <div class="toolbar">
-      <button id="openButton" type="button">Open .urdf</button>
+      <button id="openButton" type="button">Open URDF</button>
       <span id="status">No model loaded</span>
     </div>
     <div id="viewer"></div>

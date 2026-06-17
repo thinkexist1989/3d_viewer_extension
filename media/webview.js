@@ -236,7 +236,7 @@ window.addEventListener("message", async (event) => {
       applyLoadedModel(robot);
       currentUrdfRobot = robot;
       updateAxesMode();
-      setStatus(`Model loaded: ${fileName}`);
+      setStatus(`Model loaded: ${sourcePath}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const details = buildLoadErrorDetails(errorMessage);

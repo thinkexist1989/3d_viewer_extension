@@ -4,3 +4,7 @@ src/**
 **/*.ts
 .gitignore
 README.md
+diana_description/**
+*.vsix
+CLAUDE.md
+tsconfig.json

@@ -139,6 +139,12 @@ body {
   text-overflow: ellipsis;
 }
 
+.model-info .info-row .joint-types {
+  white-space: normal;
+  word-break: break-word;
+  color: #a0c4f0;
+}
+
 .drop-overlay {
   position: absolute;
   inset: 10px;

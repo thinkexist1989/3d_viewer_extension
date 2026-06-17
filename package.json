@@ -2,7 +2,7 @@
   "name": "three-model-viewer",
   "displayName": "Three Model Viewer",
   "description": "VS Code extension to preview 3D models using three.js",
-  "version": "0.0.3",
+  "version": "0.0.13",
   "publisher": "localdev",
   "engines": {
     "vscode": "^1.90.0"
@@ -22,7 +22,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "release": "node -e \"const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));const v=p.version.split('.');v[2]=String(Number(v[2])+1);p.version=v.join('.');fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n');console.log('Version bumped to '+p.version)\" && npx vsce package --allow-missing-repository"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
@@ -31,6 +32,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "three": "^0.167.1"
+    "three": "^0.167.1",
+    "urdf-loader": "^0.13.0"
   }
 }

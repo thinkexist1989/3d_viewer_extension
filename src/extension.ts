@@ -55,9 +55,9 @@ async function requestAndLoadModel(webview: vscode.Webview): Promise<void> {
     canSelectMany: false,
     canSelectFiles: true,
     canSelectFolders: false,
-    openLabel: "Open 3D Model",
+    openLabel: "Open URDF Model",
     filters: {
-      "3D Models": ["glb", "gltf"]
+      "URDF Models": ["urdf"]
     }
   });
 
@@ -67,22 +67,28 @@ async function requestAndLoadModel(webview: vscode.Webview): Promise<void> {
 
   const selectedUri = selected[0];
   const selectedDirUri = vscode.Uri.file(path.dirname(selectedUri.fsPath));
+  // One level up from the URDF directory — typically the robot package root.
+  // Used by URDFLoader to resolve package:// paths.
+  const packagesRootUri = vscode.Uri.file(path.dirname(selectedDirUri.fsPath));
+
   ensureResourceRoot(webview, selectedDirUri);
+  ensureResourceRoot(webview, packagesRootUri);
+
   const lowerPath = selectedUri.path.toLowerCase();
 
-  if (!lowerPath.endsWith(".glb") && !lowerPath.endsWith(".gltf")) {
-    void vscode.window.showWarningMessage("Only .glb and .gltf files are supported.");
+  if (!lowerPath.endsWith(".urdf")) {
+    void vscode.window.showWarningMessage("Only .urdf files are supported.");
     return;
   }
 
-  // Let three.js fetch the model (and any external .bin/textures) directly via
-  // its webview URI. Sending bytes through postMessage is unreliable because
-  // typed arrays are not preserved across the message channel.
+  // Let urdf-loader fetch the URDF and its mesh resources directly via webview URIs.
   webview.postMessage({
     type: "loadModelUrl",
     fileName: path.basename(selectedUri.fsPath),
     sourcePath: selectedUri.fsPath,
-    url: webview.asWebviewUri(selectedUri).toString()
+    url: webview.asWebviewUri(selectedUri).toString(),
+    workingPath: webview.asWebviewUri(selectedDirUri).toString() + "/",
+    packagesPath: webview.asWebviewUri(packagesRootUri).toString()
   });
 }
 
@@ -109,6 +115,9 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
   const threeAddonsUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, "node_modules", "three", "examples", "jsm")
   );
+  const urdfLoaderUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, "node_modules", "urdf-loader", "src", "URDFLoader.js")
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -124,7 +133,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
   </head>
   <body>
     <div class="toolbar">
-      <button id="openButton" type="button">Open .glb / .gltf</button>
+      <button id="openButton" type="button">Open .urdf</button>
       <span id="status">No model loaded</span>
     </div>
     <div id="viewer"></div>
@@ -133,7 +142,9 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
       {
         "imports": {
           "three": "${threeUri}",
-          "three/addons/": "${threeAddonsUri}/"
+          "three/addons/": "${threeAddonsUri}/",
+          "three/examples/jsm/": "${threeAddonsUri}/",
+          "urdf-loader": "${urdfLoaderUri}"
         }
       }
     </script>

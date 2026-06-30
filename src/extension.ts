@@ -1,12 +1,19 @@
 import * as path from "node:path";
+import * as net from "node:net";
 import * as vscode from "vscode";
 
 let viewerPanel: vscode.WebviewPanel | undefined;
+let tcpServer: net.Server | null = null;
+let tcpClient: net.Socket | null = null;
+let tcpBuffer: string = "";
+const jointState: Record<string, number> = {};
 
 export function activate(context: vscode.ExtensionContext) {
+  console.log("ThreeModelViewer activated");
   const openViewerCommand = vscode.commands.registerCommand(
     "threeModelViewer.openViewer",
     async () => {
+      console.log("openViewer command");
       if (viewerPanel) {
         viewerPanel.reveal(vscode.ViewColumn.Beside);
         return;
@@ -29,13 +36,25 @@ export function activate(context: vscode.ExtensionContext) {
 
       viewerPanel.webview.html = getWebviewHtml(viewerPanel.webview, context.extensionUri);
 
-      viewerPanel.webview.onDidReceiveMessage(async (message: { type?: string }) => {
+      viewerPanel.webview.onDidReceiveMessage(async (message: { type?: string; [key: string]: unknown }) => {
         if (message.type === "requestOpenModel") {
+          console.log("requestOpenModel");
           await requestAndLoadModel(viewerPanel!.webview);
+        } else if (message.type === "startTcp") {
+          const port = getTcpPort();
+          startTcpServer(port);
+        } else if (message.type === "stopTcp") {
+          stopTcpServer();
+        } else if (message.type === "setJointAngles") {
+          const angles = message.angles as Record<string, number> | undefined;
+          if (angles) {
+            Object.assign(jointState, angles);
+          }
         }
       });
 
       viewerPanel.onDidDispose(() => {
+        stopTcpServer();
         viewerPanel = undefined;
       });
 
@@ -44,13 +63,103 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(openViewerCommand);
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("threeModelViewer.tcpPort") && tcpServer) {
+        const port = getTcpPort();
+        stopTcpServer();
+        startTcpServer(port);
+      }
+    })
+  );
 }
 
 export function deactivate() {
+  stopTcpServer();
   viewerPanel?.dispose();
 }
 
+function getTcpPort(): number {
+  return vscode.workspace.getConfiguration("threeModelViewer").get<number>("tcpPort", 50051);
+}
+
+function startTcpServer(port: number): void {
+  if (tcpServer) {
+    stopTcpServer();
+  }
+
+  tcpServer = net.createServer((socket) => {
+    if (tcpClient) {
+      tcpClient.destroy();
+    }
+    tcpClient = socket;
+    tcpBuffer = "";
+
+    postToWebview({ type: "tcpStatus", connected: true, port });
+
+    socket.on("data", (data) => {
+      tcpBuffer += data.toString();
+      let newlineIdx: number;
+      while ((newlineIdx = tcpBuffer.indexOf("\n")) !== -1) {
+        const line = tcpBuffer.substring(0, newlineIdx).trim();
+        tcpBuffer = tcpBuffer.substring(newlineIdx + 1);
+        if (!line) continue;
+        try {
+          const angles = JSON.parse(line) as Record<string, number>;
+          Object.assign(jointState, angles);
+          postToWebview({ type: "jointAngles", angles, source: "tcp" });
+        } catch {
+          // Ignore malformed JSON lines
+        }
+      }
+    });
+
+    socket.on("close", () => {
+      if (tcpClient === socket) {
+        tcpClient = null;
+      }
+      postToWebview({ type: "tcpStatus", connected: false, port });
+    });
+
+    socket.on("error", () => {
+      if (tcpClient === socket) {
+        tcpClient = null;
+      }
+      postToWebview({ type: "tcpStatus", connected: false, port });
+    });
+  });
+
+  tcpServer.on("error", (err) => {
+    void vscode.window.showWarningMessage(`TCP server error on port ${port}: ${err.message}`);
+    postToWebview({ type: "tcpStatus", connected: false, port, error: err.message });
+    tcpServer = null;
+    tcpClient = null;
+  });
+
+  tcpServer.listen(port, "127.0.0.1", () => {
+    postToWebview({ type: "tcpStatus", connected: false, port, listening: true });
+  });
+}
+
+function stopTcpServer(): void {
+  if (tcpClient) {
+    tcpClient.destroy();
+    tcpClient = null;
+  }
+  if (tcpServer) {
+    tcpServer.close();
+    tcpServer = null;
+  }
+  tcpBuffer = "";
+}
+
+function postToWebview(message: Record<string, unknown>): void {
+  viewerPanel?.webview.postMessage(message);
+}
+
 async function requestAndLoadModel(webview: vscode.Webview): Promise<void> {
+  console.log("showOpenDialog");
   const selected = await vscode.window.showOpenDialog({
     canSelectMany: false,
     canSelectFiles: true,
@@ -60,15 +169,15 @@ async function requestAndLoadModel(webview: vscode.Webview): Promise<void> {
       "URDF Models": ["urdf"]
     }
   });
-
+  console.log("selected =", selected);
   if (!selected || selected.length === 0) {
+    console.log("cancel");
     return;
   }
 
   const selectedUri = selected[0];
+  console.log("selectedUri =", selectedUri.fsPath);
   const selectedDirUri = vscode.Uri.file(path.dirname(selectedUri.fsPath));
-  // One level up from the URDF directory — typically the robot package root.
-  // Used by URDFLoader to resolve package:// paths.
   const packagesRootUri = vscode.Uri.file(path.dirname(selectedDirUri.fsPath));
 
   ensureResourceRoot(webview, selectedDirUri);
@@ -81,15 +190,27 @@ async function requestAndLoadModel(webview: vscode.Webview): Promise<void> {
     return;
   }
 
-  // Let urdf-loader fetch the URDF and its mesh resources directly via webview URIs.
-  webview.postMessage({
-    type: "loadModelUrl",
-    fileName: path.basename(selectedUri.fsPath),
-    sourcePath: selectedUri.fsPath,
-    url: webview.asWebviewUri(selectedUri).toString(),
-    workingPath: webview.asWebviewUri(selectedDirUri).toString() + "/",
-    packagesPath: webview.asWebviewUri(packagesRootUri).toString()
-  });
+  // webview.postMessage({
+  //   type: "loadModelUrl",
+  //   fileName: path.basename(selectedUri.fsPath),
+  //   sourcePath: selectedUri.fsPath,
+  //   url: webview.asWebviewUri(selectedUri).toString(),
+  //   workingPath: webview.asWebviewUri(selectedDirUri).toString() + "/",
+  //   packagesPath: webview.asWebviewUri(packagesRootUri).toString()
+  // });
+
+  const msg = {
+      type: "loadModelUrl",
+      fileName: path.basename(selectedUri.fsPath),
+      sourcePath: selectedUri.fsPath,
+      url: webview.asWebviewUri(selectedUri).toString(),
+      workingPath: webview.asWebviewUri(selectedDirUri).toString() + "/",
+      packagesPath: webview.asWebviewUri(packagesRootUri).toString()
+  };
+
+  console.log(msg);
+
+  webview.postMessage(msg);
 }
 
 function ensureResourceRoot(webview: vscode.Webview, dirUri: vscode.Uri): void {
@@ -144,8 +265,21 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): stri
     <div class="toolbar">
       <button id="openButton" type="button">Open URDF</button>
       <span id="status">No model loaded</span>
+      <div id="tcpIndicator" class="tcp-indicator disconnected">
+        <span class="tcp-dot"></span>
+        <span id="tcpLabel">TCP: Off</span>
+      </div>
     </div>
-    <div id="viewer"></div>
+    <div class="main-content">
+      <div id="viewer"></div>
+      <div id="jointPanel" class="joint-panel collapsed">
+        <div class="joint-panel-header">
+          <span>Joint Control</span>
+          <button id="tcpToggle" class="tcp-btn" type="button">Start TCP</button>
+        </div>
+        <div id="jointList" class="joint-list"></div>
+      </div>
+    </div>
 
     <script nonce="${nonce}" type="importmap">
       {

@@ -2,7 +2,7 @@
   "name": "three-model-viewer",
   "displayName": "Three Model Viewer",
   "description": "VS Code extension to preview 3D models using three.js",
-  "version": "0.0.18",
+  "version": "0.0.26",
   "publisher": "localdev",
   "engines": {
     "vscode": "^1.90.0"
@@ -11,13 +11,26 @@
     "Other"
   ],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:threeModelViewer.openViewer"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "threeModelViewer.openViewer",
         "title": "Three Model Viewer: Open Viewer"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Three Model Viewer",
+      "properties": {
+        "threeModelViewer.tcpPort": {
+          "type": "number",
+          "default": 50051,
+          "description": "TCP port for receiving joint angles from external programs (e.g. C++ controller)"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

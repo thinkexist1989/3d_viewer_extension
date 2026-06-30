@@ -5,7 +5,7 @@ import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
 import URDFLoader from "urdf-loader";
 import { ViewportGizmo } from "three-viewport-gizmo";
-
+console.log("webview loaded");
 // Use Z-up convention throughout: affects ViewportGizmo coordinate conversions
 // and the default up vector for all Object3D instances.
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
@@ -15,6 +15,11 @@ const vscode = acquireVsCodeApi();
 const viewerElement = document.getElementById("viewer");
 const openButton = document.getElementById("openButton");
 const statusElement = document.getElementById("status");
+const tcpIndicator = document.getElementById("tcpIndicator");
+const tcpLabel = document.getElementById("tcpLabel");
+const tcpToggleBtn = document.getElementById("tcpToggle");
+const jointPanel = document.getElementById("jointPanel");
+const jointList = document.getElementById("jointList");
 const dropOverlayElement = document.createElement("div");
 dropOverlayElement.className = "drop-overlay";
 dropOverlayElement.textContent = "Drop .urdf model here";
@@ -30,6 +35,12 @@ axesBtn.id = "axesButton";
 axesBtn.textContent = "Axes";
 capsuleToolbar.appendChild(axesBtn);
 
+const jointsBtn = document.createElement("button");
+jointsBtn.className = "capsule-btn";
+jointsBtn.id = "jointsButton";
+jointsBtn.textContent = "Joints";
+capsuleToolbar.appendChild(jointsBtn);
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#10141a");
 
@@ -40,7 +51,6 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 camera.position.set(3, -3, 2);
-// Z-up: tell the camera its up direction before OrbitControls reads it.
 camera.up.set(0, 0, 1);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -61,7 +71,6 @@ directionalLight.position.set(4, 8, 6);
 scene.add(directionalLight);
 
 const grid = new THREE.GridHelper(20, 20, 0x3f3f46, 0x2a2a30);
-// Rotate grid so it lies in the XY plane (Z-up convention).
 grid.rotation.x = Math.PI / 2;
 scene.add(grid);
 
@@ -75,12 +84,9 @@ gizmo.attachControls(controls);
 const loader = new GLTFLoader();
 const urdfLoader = new URDFLoader();
 
-// Custom mesh loader that extends URDFLoader's defaults to also handle
-// .obj, .glb, and .gltf mesh formats referenced from URDF files.
 const _defaultMeshLoader = urdfLoader.defaultMeshLoader.bind(urdfLoader);
 urdfLoader.loadMeshCb = (meshPath, manager, material, done) => {
   if (/\.obj$/i.test(meshPath)) {
-    // Derive sibling .mtl path and resource base from the .obj URL.
     const mtlPath = meshPath.replace(/\.obj$/i, ".mtl");
     const basePath = meshPath.substring(0, meshPath.lastIndexOf("/") + 1);
 
@@ -88,8 +94,6 @@ urdfLoader.loadMeshCb = (meshPath, manager, material, done) => {
       const objLoader = new OBJLoader(manager);
       if (mtlResult) {
         mtlResult.preload();
-        // Blender OBJ exports have Ks 1 1 1 / Ns 255 which over-brightens the model.
-        // Clamp specular while keeping the correct Kd diffuse color.
         for (const mat of Object.values(mtlResult.materials)) {
           mat.side = THREE.DoubleSide;
           mat.wireframe = false;
@@ -142,6 +146,13 @@ let axesVisible = false;
 const originalMaterialProps = new Map();
 let jointAxesHelpers = [];
 
+// Joint control state
+let tcpConnected = false;
+let tcpListening = false;
+let jointPanelVisible = false;
+const jointAngles = {};
+let jointPanelEntries = []; // [{name, lower, upper, slider, input}]
+
 loader.manager.onError = (url) => {
   lastFailedUrl = String(url ?? "");
   console.error("[Three Model Viewer] Resource load failed:", lastFailedUrl);
@@ -155,6 +166,21 @@ axesBtn.addEventListener("click", () => {
   axesVisible = !axesVisible;
   axesBtn.classList.toggle("active", axesVisible);
   updateAxesMode();
+});
+
+jointsBtn.addEventListener("click", () => {
+  jointPanelVisible = !jointPanelVisible;
+  jointsBtn.classList.toggle("active", jointPanelVisible);
+  jointPanel.classList.toggle("collapsed", !jointPanelVisible);
+  resize();
+});
+
+tcpToggleBtn?.addEventListener("click", () => {
+  if (tcpListening) {
+    vscode.postMessage({ type: "stopTcp" });
+  } else {
+    vscode.postMessage({ type: "startTcp" });
+  }
 });
 
 viewerElement.addEventListener("dragenter", (event) => {
@@ -207,6 +233,7 @@ window.addEventListener("drop", (event) => {
 });
 
 window.addEventListener("message", async (event) => {
+  console.log("message =", event.data);
   const message = event.data;
   if (message.type === "loadModelUrl") {
     loadingSource = "open-dialog-url";
@@ -226,8 +253,6 @@ window.addEventListener("message", async (event) => {
 
     try {
       urdfLoader.workingPath = workingPath;
-      // Set the packages root so that package:// URIs in the URDF resolve correctly.
-      // packagesPath is the parent of the URDF’s directory (typically the robot package root).
       if (packagesPath) {
         urdfLoader.packages = packagesPath;
       }
@@ -236,6 +261,7 @@ window.addEventListener("message", async (event) => {
       applyLoadedModel(robot);
       currentUrdfRobot = robot;
       updateAxesMode();
+      buildJointPanelUI();
       setStatus(`Model loaded: ${sourcePath}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -248,6 +274,18 @@ window.addEventListener("message", async (event) => {
         error,
         lastFailedUrl
       });
+    }
+  } else if (message.type === "jointAngles") {
+    const angles = message.angles;
+    if (angles && typeof angles === "object") {
+      applyJointAngles(angles, message.source === "tcp");
+    }
+  } else if (message.type === "tcpStatus") {
+    tcpConnected = !!message.connected;
+    tcpListening = !!message.listening;
+    updateTcpIndicator();
+    if (message.error) {
+      setStatus(`TCP error: ${message.error}`);
     }
   }
 });
@@ -282,11 +320,11 @@ async function loadModelFromFile(file) {
       const text = await file.text();
       urdfLoader.workingPath = "";
       const robot = urdfLoader.parse(text);
-      // URDF/ROS uses Z-up; three.js uses Y-up. Rotate -90° around X to align.
       robot.rotation.x = -Math.PI / 2;
       applyLoadedModel(robot);
       currentUrdfRobot = robot;
       updateAxesMode();
+      buildJointPanelUI();
       setStatus(`Model loaded: ${file.name} (external meshes may fail via drag-drop)`);
       return;
     }
@@ -379,8 +417,147 @@ function setStatus(text) {
   }
 }
 
+// ── Joint control ──────────────────────────────────────────────────
+
+function applyJointAngles(angles, fromTcp = false) {
+  if (!currentUrdfRobot?.joints) return;
+
+  for (const [name, angle] of Object.entries(angles)) {
+    if (typeof angle !== "number") continue;
+    jointAngles[name] = angle;
+    const joint = currentUrdfRobot.joints[name];
+    if (joint) {
+      // Use setJointValue to correctly handle revolute (rotation),
+      // prismatic (translation), and continuous (unlimited rotation) joints.
+      joint.setJointValue(angle);
+    }
+  }
+
+  // Sync sliders and inputs (skip updates for the source that triggered this)
+  for (const entry of jointPanelEntries) {
+    const val = jointAngles[entry.name];
+    if (val === undefined) continue;
+    if (fromTcp) {
+      entry.slider.value = String(val);
+      entry.input.value = val.toFixed(3);
+    }
+  }
+}
+
+function updateTcpIndicator() {
+  if (!tcpIndicator || !tcpLabel || !tcpToggleBtn) return;
+
+  tcpIndicator.classList.toggle("connected", tcpConnected || tcpListening);
+  tcpIndicator.classList.toggle("disconnected", !tcpConnected && !tcpListening);
+
+  if (tcpConnected) {
+    tcpLabel.textContent = "TCP: Connected";
+    tcpToggleBtn.textContent = "Stop TCP";
+  } else if (tcpListening) {
+    tcpLabel.textContent = "TCP: Listening";
+    tcpToggleBtn.textContent = "Stop TCP";
+  } else {
+    tcpLabel.textContent = "TCP: Off";
+    tcpToggleBtn.textContent = "Start TCP";
+  }
+}
+
+function buildJointPanelUI() {
+  jointPanelEntries = [];
+
+  if (!jointList) return;
+  jointList.innerHTML = "";
+
+  if (!currentUrdfRobot?.joints) return;
+
+  const jointNames = Object.keys(currentUrdfRobot.joints).sort();
+
+  if (jointNames.length === 0) return;
+
+  for (const name of jointNames) {
+    const joint = currentUrdfRobot.joints[name];
+    const jointType = joint?.jointType || "revolute";
+    const isPrismatic = jointType === "prismatic";
+    // For revolute/continuous, default range is ±π; for prismatic, use limits or ±1 meter.
+    let lower, upper;
+    if (joint?.limit) {
+      lower = joint.limit.lower ?? (isPrismatic ? -1 : -Math.PI);
+      upper = joint.limit.upper ?? (isPrismatic ? 1 : Math.PI);
+    } else {
+      lower = isPrismatic ? -1 : -Math.PI;
+      upper = isPrismatic ? 1 : Math.PI;
+    }
+    // If limits are both 0 (placeholder in SolidWorks exports), use defaults.
+    if (lower === 0 && upper === 0) {
+      lower = isPrismatic ? -1 : -Math.PI;
+      upper = isPrismatic ? 1 : Math.PI;
+    }
+    if (jointType === "continuous") {
+      lower = -Math.PI;
+      upper = Math.PI;
+    }
+    if (jointType === "fixed") continue;
+
+    const step = isPrismatic ? "0.001" : "0.01";
+    const decimals = 3;
+
+    jointAngles[name] = 0;
+
+    const row = document.createElement("div");
+    row.className = "joint-row";
+
+    const label = document.createElement("span");
+    label.className = "joint-name";
+    label.textContent = `${name} [${jointType}]`;
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "joint-slider";
+    slider.min = String(lower);
+    slider.max = String(upper);
+    slider.step = step;
+    slider.value = "0";
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.className = "joint-input";
+    input.min = String(lower);
+    input.max = String(upper);
+    input.step = step;
+    input.value = "0.000";
+
+    slider.addEventListener("input", () => {
+      const val = parseFloat(slider.value);
+      input.value = val.toFixed(decimals);
+      jointAngles[name] = val;
+      if (currentUrdfRobot?.joints?.[name]) {
+        currentUrdfRobot.joints[name].setJointValue(val);
+      }
+      vscode.postMessage({ type: "setJointAngles", angles: { [name]: val } });
+    });
+
+    input.addEventListener("input", () => {
+      let val = parseFloat(input.value);
+      if (isNaN(val)) return;
+      val = Math.max(lower, Math.min(upper, val));
+      slider.value = String(val);
+      jointAngles[name] = val;
+      if (currentUrdfRobot?.joints?.[name]) {
+        currentUrdfRobot.joints[name].setJointValue(val);
+      }
+      vscode.postMessage({ type: "setJointAngles", angles: { [name]: val } });
+    });
+
+    row.appendChild(label);
+    row.appendChild(slider);
+    row.appendChild(input);
+    jointList.appendChild(row);
+
+    jointPanelEntries.push({ name, slider, input });
+  }
+}
+
 function updateAxesMode() {
-  // Remove all existing joint axes helpers.
   for (const helper of jointAxesHelpers) {
     helper.parent?.remove(helper);
     helper.geometry?.dispose();
@@ -390,7 +567,6 @@ function updateAxesMode() {
   if (!currentModel) return;
 
   if (axesVisible) {
-    // Make all mesh materials semi-transparent and save originals.
     currentModel.traverse((child) => {
       if (!child.isMesh) return;
       const mats = Array.isArray(child.material) ? child.material : [child.material];
@@ -408,7 +584,6 @@ function updateAxesMode() {
       });
     });
 
-    // Add AxesHelper to every joint.
     if (currentUrdfRobot?.joints) {
       for (const joint of Object.values(currentUrdfRobot.joints)) {
         const helper = new THREE.AxesHelper(0.12);
@@ -418,7 +593,6 @@ function updateAxesMode() {
       }
     }
   } else {
-    // Restore original material properties.
     currentModel.traverse((child) => {
       if (!child.isMesh) return;
       const mats = Array.isArray(child.material) ? child.material : [child.material];

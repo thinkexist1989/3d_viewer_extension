@@ -176,6 +176,7 @@ jointsBtn.addEventListener("click", () => {
 });
 
 tcpToggleBtn?.addEventListener("click", () => {
+  console.log("[webview] tcpToggle clicked, listening=", tcpListening);
   if (tcpListening) {
     vscode.postMessage({ type: "stopTcp" });
   } else {
@@ -281,6 +282,7 @@ window.addEventListener("message", async (event) => {
       applyJointAngles(angles, message.source === "tcp");
     }
   } else if (message.type === "tcpStatus") {
+    console.log("[webview] tcpStatus:", message);
     tcpConnected = !!message.connected;
     tcpListening = !!message.listening;
     updateTcpIndicator();

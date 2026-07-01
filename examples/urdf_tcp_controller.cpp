@@ -357,7 +357,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  模式: " << mode << std::endl;
     std::cout << "========================================" << std::endl;
 
-    sock_t sock = connectToServer("127.0.0.1", port);
+    sock_t sock = connectToServer("192.168.137.1", port);
     if (sock == INVALID_SOCK) {
         std::cerr << "[ERROR] 无法连接到服务器" << std::endl;
         std::cerr << "  请确保 VS Code 插件的 TCP 服务器已启动。" << std::endl;

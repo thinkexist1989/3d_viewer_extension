@@ -2,7 +2,7 @@
   "name": "three-model-viewer",
   "displayName": "Three Model Viewer",
   "description": "VS Code extension to preview 3D models using three.js",
-  "version": "0.0.26",
+  "version": "0.0.28",
   "publisher": "localdev",
   "engines": {
     "vscode": "^1.90.0"

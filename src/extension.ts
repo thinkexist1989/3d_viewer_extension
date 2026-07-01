@@ -137,7 +137,7 @@ function startTcpServer(port: number): void {
     tcpClient = null;
   });
 
-  tcpServer.listen(port, "127.0.0.1", () => {
+  tcpServer.listen(port, "0.0.0.0", () => {
     postToWebview({ type: "tcpStatus", connected: false, port, listening: true });
   });
 }

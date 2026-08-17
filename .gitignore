@@ -2,7 +2,10 @@ node_modules/
 out/
 examples/build
 *.vsix
-
+examples/build/
+out/
+node_modules/
+*.vsix
 # Logs
 *.log
 npm-debug.log*

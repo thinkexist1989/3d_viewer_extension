@@ -1,0 +1,350 @@
+<?xml version="1.0"?>
+<!-- Cutter-tooth assembly station from 吴迪 624 URDF: rail + ER155-3200 + gripper + table/cutter fixtures.
+     绞刀 visual 已换成墨斗工程 DoubleRowAssembly 中的「铰刀4+5并排」（与 铰刀4+5并排.STEP 同一模型、同一工位 CAD 位姿）。旧网格见 meshes/part_004_1.stl.bak。
+     Mesh units are mm (scale 0.001). -->
+<robot name="cutter_tooth_station">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.00252493 -6.30807687 -5.58070574" rpy="0 0 0"/>
+      <mass value="3353592.99065223"/>
+      <inertia ixx="415168602.0568186" ixy="45492.09594998" ixz="89957.81409392" iyy="376655434.4616063" iyz="-487517.41394566" izz="261595979.28944415"/>
+    </inertial>
+    <visual name="part_002_visual_1">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_002_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_002_collision_1">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_002_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_020_visual_2">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_020_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_020_collision_2">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_020_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_021_visual_3">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_021_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_021_collision_3">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_021_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_022_visual_4">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_022_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_022_collision_4">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_022_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_023_visual_5">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_023_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_023_collision_5">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_023_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_024_visual_6">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_024_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_024_collision_6">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_024_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_025_visual_7">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_025_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_025_collision_7">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_025_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_026_visual_8">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_026_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_026_collision_8">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_026_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_027_visual_9">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_027_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_027_collision_9">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_027_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_028_visual_10">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_028_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_028_collision_10">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_028_1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_004_visual_11">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_004_cutter_4plus5.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_004_collision_11">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_004_cutter_4plus5.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_001_visual_12">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_001_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_001_collision_12">
+      <origin xyz="0 0 0" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_001_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_002">
+    <inertial>
+      <origin xyz="0.39052486 0.6226813 -0.05999996" rpy="0 0 0"/>
+      <mass value="144.09448195"/>
+      <inertia ixx="8.77626671" ixy="0.27368241" ixz="-1.7e-7" iyy="16.49767536" iyz="4.1e-7" izz="12.06150946"/>
+    </inertial>
+    <visual name="part_003_visual_1">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_003_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_003_collision_1">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_003_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_013_visual_2">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_013_ER155-3200___________-2016_V1.1-4.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_013_collision_2">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_013_ER155-3200___________-2016_V1.1-4.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_003">
+    <inertial>
+      <origin xyz="0.0729338 -0.66207198 -0.10297474" rpy="0 0 0"/>
+      <mass value="142.70702714"/>
+      <inertia ixx="10.79073639" ixy="-0.12360249" ixz="1.72510642" iyy="17.50134091" iyz="0.0640146" izz="15.43578006"/>
+    </inertial>
+    <visual name="part_005_visual_1">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_005_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_005_collision_1">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_005_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_011_visual_2">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_011_ER155-3200___________-2016_V1.1-3.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_011_collision_2">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_011_ER155-3200___________-2016_V1.1-3.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_006_visual_3">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_006_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_006_collision_3">
+      <origin xyz="3.769 1.22 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_006_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_004">
+    <inertial>
+      <origin xyz="0.00293832 -0.58111148 -0.31730564" rpy="0 0 0"/>
+      <mass value="94.53922706"/>
+      <inertia ixx="19.66471587" ixy="-0.00106654" ixz="-0.00554402" iyy="3.0151588" iyz="-0.00237091" izz="20.65903601"/>
+    </inertial>
+    <visual name="part_007_visual_1">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_007_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_007_collision_1">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_007_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_016_visual_2">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_016_2_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_016_collision_2">
+      <origin xyz="4.089 2.005 -3.89559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_016_2_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_006">
+    <inertial>
+      <origin xyz="0.0431544 -0.11078178 0.36087238" rpy="0 0 0"/>
+      <mass value="91.10779185"/>
+      <inertia ixx="6.10356659" ixy="-0.00079235" ixz="-0.0008296" iyy="6.9764499" iyz="-0.01763303" izz="5.77780475"/>
+    </inertial>
+    <visual name="part_012_visual_1">
+      <origin xyz="4.089 3.195 -3.53309784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_012_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_012_collision_1">
+      <origin xyz="4.089 3.195 -3.53309784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_012_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_017_visual_2">
+      <origin xyz="4.089 3.195 -3.53309784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_017_3_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_017_collision_2">
+      <origin xyz="4.089 3.195 -3.53309784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_017_3_ER155-3200___________-2016_V1.1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_007">
+    <inertial>
+      <origin xyz="-0.432 0 6e-8" rpy="0 0 0"/>
+      <mass value="30.90856883"/>
+      <inertia ixx="0.2820716" ixy="0" ixz="0" iyy="2.06379605" iyz="0" izz="2.06379605"/>
+    </inertial>
+    <visual name="part_014_visual_1">
+      <origin xyz="4.377 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_014_ER155-3200___________-2016_V1.1-5.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_014_collision_1">
+      <origin xyz="4.377 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_014_ER155-3200___________-2016_V1.1-5.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_008">
+    <inertial>
+      <origin xyz="-0.3357959 9.8e-7 -0.01449799" rpy="0 0 0"/>
+      <mass value="46.3627606"/>
+      <inertia ixx="0.950265" ixy="0" ixz="0" iyy="2.37631316" iyz="0" izz="2.05916064"/>
+    </inertial>
+    <visual name="part_009_visual_1">
+      <origin xyz="5.241 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_009_ER155-3200___________-2016_V1.1-1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_009_collision_1">
+      <origin xyz="5.241 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_009_ER155-3200___________-2016_V1.1-1.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_009">
+    <inertial>
+      <origin xyz="-0.00441382 -0.00000439 -0.10299994" rpy="0 0 0"/>
+      <mass value="13.5802016"/>
+      <inertia ixx="0.09219271" ixy="0" ixz="0" iyy="0.15997722" iyz="0" izz="0.14948324"/>
+    </inertial>
+    <visual name="part_010_visual_1">
+      <origin xyz="5.769 3.395 -3.94459784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_010_ER155-3200___________-2016_V1.1-2.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_010_collision_1">
+      <origin xyz="5.769 3.395 -3.94459784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_010_ER155-3200___________-2016_V1.1-2.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <link name="link_010">
+    <inertial>
+      <origin xyz="-0.36377874 0.04179866 7e-8" rpy="0 0 0"/>
+      <mass value="15.79079693"/>
+      <inertia ixx="0.54338034" ixy="0.01356809" ixz="1e-8" iyy="0.95376184" iyz="1e-8" izz="1.09756923"/>
+    </inertial>
+    <visual name="part_008_visual_1">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_008_ER155-3200___________-2016_V1.1-0.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_008_collision_1">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_008_ER155-3200___________-2016_V1.1-0.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_018_visual_2">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_018_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_018_collision_2">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_018_part.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_019_visual_3">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_019_A.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_019_collision_3">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_019_A.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+    <visual name="part_029_visual_4">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_029_b.stl" scale="0.001 0.001 0.001"/></geometry>
+    </visual>
+    <collision name="part_029_collision_4">
+      <origin xyz="5.94098919 3.395 -3.83559784" rpy="1.57079633 0 0"/>
+      <geometry><mesh filename="meshes/part_029_b.stl" scale="0.001 0.001 0.001"/></geometry>
+    </collision>
+  </link>
+  <joint name="link_002_joint" type="prismatic">
+    <parent link="base_link"/>
+    <child link="link_002"/>
+    <origin xyz="-4.089 -2.005 3.89559784" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <!-- 导轨：需求 -200~2600mm，略放宽便于示教 -->
+    <limit lower="-0.2" upper="2.8" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_003_joint" type="revolute">
+    <parent link="link_002"/>
+    <child link="link_003"/>
+    <origin xyz="0.32 0.785 -0.06" rpy="0 0 0"/>
+    <axis xyz="0 -1 0"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_004_joint" type="revolute">
+    <parent link="link_003"/>
+    <child link="link_004"/>
+    <origin xyz="-0.32 -0.785 0.06" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_007_joint" type="revolute">
+    <parent link="link_006"/>
+    <child link="link_007"/>
+    <origin xyz="-0.288 -0.2 0.3025" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_008_joint" type="revolute">
+    <parent link="link_007"/>
+    <child link="link_008"/>
+    <origin xyz="-0.864 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-3.14159265" upper="3.14159265" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_009_joint" type="revolute">
+    <parent link="link_008"/>
+    <child link="link_009"/>
+    <origin xyz="-0.528 0 0.109" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+  <joint name="link_010_joint" type="revolute">
+    <parent link="link_009"/>
+    <child link="link_010"/>
+    <origin xyz="-0.17198919 0 -0.109" rpy="0 0 0"/>
+    <axis xyz="-1 0 0"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+  <joint name="joint_6" type="revolute">
+    <parent link="link_004"/>
+    <child link="link_006"/>
+    <origin xyz="0 -1.19 -0.3625" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28318531" upper="6.28318531" effort="10" velocity="5"/>
+  </joint>
+</robot>

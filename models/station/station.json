@@ -1,0 +1,58 @@
+{
+  "joints": {
+    "rail": "link_002_joint",
+    "j1": "link_003_joint",
+    "j2": "link_004_joint",
+    "j3": "joint_6",
+    "j4": "link_007_joint",
+    "j5": "link_009_joint",
+    "j6": "link_010_joint",
+    "coaxial": "link_008_joint"
+  },
+  "rail": {
+    "zero_mm": 0,
+    "sign": 1,
+    "comment": "轨迹表附加轴：0=第一刀齿，2600=第八/九刀齿。URDF 导轨米数 = (rail_mm - zero_mm) * sign / 1000"
+  },
+  "steps": {
+    "rail_m": 0.05,
+    "joint_rad": 0.08726646
+  },
+  "gripper": {
+    "open": 0,
+    "closed": 0.04,
+    "comment": "平行夹爪视觉开合：每侧沿 link_010 局部 Z 平移的米数。CAD 内开档约 97mm，0.04=每侧 40mm。不再驱动 J6。"
+  },
+  "home": {
+    "link_002_joint": 0,
+    "link_003_joint": 0,
+    "link_004_joint": 0,
+    "joint_6": 0,
+    "link_007_joint": 0,
+    "link_008_joint": 0,
+    "link_009_joint": 0,
+    "link_010_joint": 0
+  },
+  "pick": [
+    { "id": 1, "label": "1（左一）", "rail_mm": 2600, "cartesian_mm": [-1550, -365, 450] },
+    { "id": 2, "label": "2", "rail_mm": 2600, "cartesian_mm": [-1550, -15, 450] },
+    { "id": 3, "label": "3", "rail_mm": 2280, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 4, "label": "4", "rail_mm": 1900, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 5, "label": "5", "rail_mm": 1520, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 6, "label": "6", "rail_mm": 1140, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 7, "label": "7", "rail_mm": 760, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 8, "label": "8", "rail_mm": 380, "cartesian_mm": [-1550, -75, 450] },
+    { "id": 9, "label": "9（右一）", "rail_mm": 0, "cartesian_mm": [-1550, -75, 450] }
+  ],
+  "place": [
+    { "id": 1, "label": "1（左一）", "rail_mm": 2600, "cartesian_mm": [2811.06, -169.18, 483.76, -169, 32, 125] },
+    { "id": 2, "label": "2（左二）", "rail_mm": 2600, "cartesian_mm": [2353.78, -363.92, 310.02, 178, 35, 127] },
+    { "id": 3, "label": "3（左三）", "rail_mm": 2280, "cartesian_mm": [2021.81, -286.45, 46.85, 171, 43, 138] },
+    { "id": 4, "label": "4（左四）", "rail_mm": 1900, "cartesian_mm": [1791.99, -173.78, -253.85, 169, 50, 145] },
+    { "id": 5, "label": "5（右五）", "rail_mm": 1520, "cartesian_mm": [2480.9, -150.39, 1501.84, -168, 0, 161] },
+    { "id": 6, "label": "6（右四）", "rail_mm": 1140, "cartesian_mm": [2160.04, -97.69, 1389.79, -174, 7, 167] },
+    { "id": 7, "label": "7（右三）", "rail_mm": 760, "cartesian_mm": [1897.13, -57.2, 1190.73, 180, 11, 169] },
+    { "id": 8, "label": "8（右二）", "rail_mm": 380, "cartesian_mm": [1654.04, -7.96, 940.99, 178, 16, 173] },
+    { "id": 9, "label": "9（右一）", "rail_mm": 0, "cartesian_mm": [1462.13, 39.34, 641.68, 176, 28, 174] }
+  ]
+}

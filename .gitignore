@@ -16,3 +16,8 @@ pnpm-debug.log*
 # OS/editor temp files
 .DS_Store
 Thumbs.db
+
+models/downloads/
+models/wudi_624/
+.claude/
+*.stl.bak

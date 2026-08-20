@@ -8,3 +8,6 @@ diana_description/**
 *.vsix
 CLAUDE.md
 tsconfig.json
+models/downloads/**
+models/wudi_624/**
+media/refs/**
